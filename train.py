@@ -56,10 +56,10 @@ class TrainPipeline():
         self.temp = 1.0  # the temperature param
         self.n_playout = 20  # num of simulations for each move
         self.c_puct = 1 
-        self.buffer_size = 2000
-        self.batch_size = 400  # mini-batch size for training
+        self.buffer_size = 10000
+        self.batch_size = 1000  # mini-batch size for training
         self.data_buffer = deque(maxlen=self.buffer_size)
-        self.epochs = 3  # num of train_steps for each update
+        self.epochs = 5  # num of train_steps for each update
         self.kl_targ = 0.2
         self.check_freq = 3 
         self.mol=mol
@@ -105,16 +105,16 @@ class TrainPipeline():
 
     def policy_update(self):
         """update the policy-value net"""
-        mini_batch = random.sample(self.data_buffer, self.batch_size)
-        state_batch = [data[0] for data in mini_batch]
-        mcts_probs_batch = [data[1] for data in mini_batch]
-        old_probs = self.policy_value_net.policy_value(state_batch)
+        # mini_batch = random.sample(self.data_buffer, self.batch_size)
+        # state_batch = [data[0] for data in mini_batch]
+        # mcts_probs_batch = [data[1] for data in mini_batch]
+        # old_probs = self.policy_value_net.policy_value(state_batch)
 
         for i in range(self.epochs):
-            # mini_batch = random.sample(self.data_buffer, self.batch_size)
-            # state_batch = [data[0] for data in mini_batch]
-            # mcts_probs_batch = [data[1] for data in mini_batch]
-            # old_probs = self.policy_value_net.policy_value(state_batch)
+            mini_batch = random.sample(self.data_buffer, self.batch_size)
+            state_batch = [data[0] for data in mini_batch]
+            mcts_probs_batch = [data[1] for data in mini_batch]
+            old_probs = self.policy_value_net.policy_value(state_batch)
             loss, entropy = self.policy_value_net.train_step(
                     state_batch,
                     mcts_probs_batch,
@@ -200,8 +200,8 @@ class TrainPipeline():
             print('\n\rquit')
 
 if __name__ == '__main__':
-    training_pipeline = TrainPipeline(mol="O=C(CCC1CCN(c2ncnc3[nH]ccc23)CC1)NCc1ccc(F)cc1")
-    # training_pipeline = TrainPipeline(mol="OCc1cccc(C[C@@H]2CCN(c3ncnc4[nH]ccc34)C2)c1")
+    # training_pipeline = TrainPipeline(mol="O=C(CCC1CCN(c2ncnc3[nH]ccc23)CC1)NCc1ccc(F)cc1")
+    training_pipeline = TrainPipeline(mol="OCc1cccc(C[C@@H]2CCN(c3ncnc4[nH]ccc34)C2)c1")
     # training_pipeline = TrainPipeline(mol="C#CNN=O")
     print('result{}.csv'.format(sys.argv[1]))
 
