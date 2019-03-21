@@ -197,6 +197,10 @@ def _bond_addition(state, atoms_with_free_valence, allowed_ring_sizes,
       # enforced by getting the bond from the original state with
       # GetBondBetweenAtoms()).
       Chem.Kekulize(new_state, clearAromaticFlags=True)
+      a1=state.GetAtomWithIdx(atom1)
+      a2=state.GetAtomWithIdx(atom2)
+      a1_n=all([x.IsInRing() for x in a1.GetNeighbors()])
+      a2_n=all([x.IsInRing() for x in a2.GetNeighbors()])
       if bond is not None:
         if bond.GetBondType() not in bond_orders:
           continue  # Skip aromatic bonds.
@@ -212,9 +216,9 @@ def _bond_addition(state, atoms_with_free_valence, allowed_ring_sizes,
           continue
       # If do not allow new bonds between atoms already in rings.
       elif (not allow_bonds_between_rings and
-            (state.GetAtomWithIdx(atom1).IsInRing() and
-             state.GetAtomWithIdx(atom2).IsInRing())):
+            ( (a1.IsInRing() or a1_n) or  (a2.IsInRing() or a2_n) )):
         continue
+
       # If the distance between the current two atoms is not in the
       # allowed ring sizes
       elif (allowed_ring_sizes is not None and

@@ -22,7 +22,7 @@ def start_self_play(player, mol, temp=1e-3):
       ["C", "O", "N"],
       init_mol = mol,
       allow_removal = True,
-      allow_no_modification = True,
+      allow_no_modification = False,
       allow_bonds_between_rings = False,
       allowed_ring_sizes = [5, 6],
       max_steps = 6,
@@ -54,12 +54,12 @@ class TrainPipeline():
         self.learn_rate = 2e-3
         self.lr_multiplier = 1.0  # adaptively adjust the learning rate based on KL
         self.temp = 1.0  # the temperature param
-        self.n_playout = 20  # num of simulations for each move
+        self.n_playout = 100  # num of simulations for each move
         self.c_puct = 1 
         self.buffer_size = 10000
-        self.batch_size = 1000  # mini-batch size for training
+        self.batch_size = 400  # mini-batch size for training
         self.data_buffer = deque(maxlen=self.buffer_size)
-        self.epochs = 5  # num of train_steps for each update
+        self.epochs = 8  # num of train_steps for each update
         self.kl_targ = 0.2
         self.check_freq = 3 
         self.mol=mol
@@ -156,7 +156,7 @@ class TrainPipeline():
             ["C", "O", "N"],
             init_mol=self.mol,
             allow_removal=True,
-            allow_no_modification=True,
+            allow_no_modification=False,
             allow_bonds_between_rings=False,
             allowed_ring_sizes=[5, 6],
             max_steps=6,
