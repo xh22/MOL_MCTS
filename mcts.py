@@ -138,7 +138,8 @@ class MCTS(object):
         # (action, probability) tuples p and also a score v in [-1, 1]
         # for the current player
 
-        action_probs = [(state._valid_actions[i], self._policy([state._valid_actions_fp[i]])[0],
+        action_probs = [(state._valid_actions[i],
+                         self._policy([state._valid_actions_fp[i]])[0]**(state.max_steps-state._counter+1),
                          state._valid_actions_fp[i])
                         for i in range(len(state._valid_actions_fp))]
         # Check for end of game.
@@ -154,7 +155,7 @@ class MCTS(object):
             node.expand(action_probs)
         # if end mols qed bigger then before then leaf_value is 1 otherwise is 0
         state_qed=QED.qed(Chem.MolFromSmiles(state._state))
-        if state_qed> 0.68:
+        if state_qed> state.init_qed:
             node.update_recursive(state_qed**(state.max_steps-state._counter+1))
 
         # Update value and visit count of nodes in this traversal.
