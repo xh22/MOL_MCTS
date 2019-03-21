@@ -190,7 +190,7 @@ class TrainPipeline():
                 if (i+1) % self.check_freq == 0:
                     print("current self-play batch: {}".format(i+1))
                     move_list = self.policy_evaluate()
-                    self.policy_value_net.save_model('./current_policy.model')
+                    # self.policy_value_net.save_model('./current_policy.model')
                     print(move_list)
                     self.output_smi.extend(move_list)
                     o_qed=list(map(lambda x:QED.qed(Chem.MolFromSmiles(x)), move_list))
