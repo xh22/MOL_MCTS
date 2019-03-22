@@ -229,11 +229,11 @@ class MCTSPlayer(object):
         #     print("WARNING: the mol is full")
     def get_action(self, environment, temp=1e-3, return_prob=1, rand=False):
         print("#@##########")
+        self.reset_player()
         # the pi vector returned by MCTS as in the alphaGo Zero paper
         # if environment._counter < environment.max_steps:
         acts, fps, _Qs = self.mcts.get_move_probs(environment, rand)
-        print(_Qs)
-        print(len(acts))
+
         if return_prob:
             return acts, fps, _Qs
         else:

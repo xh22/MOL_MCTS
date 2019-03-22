@@ -25,13 +25,13 @@ def start_self_play(player, mol, temp=1e-3):
       allow_no_modification = True,
       allow_bonds_between_rings = False,
       allowed_ring_sizes = [5, 6],
-      max_steps = 6,
+      max_steps = 10,
       target_fn = None,
       record_path = True)
     environment.initialize()
     environment.init_qed=QED.qed(Chem.MolFromSmiles(mol))
     states, Q = [], []
-    for i in range(6):
+    for i in range(10):
         qed_l=[QED.qed(Chem.MolFromSmiles(mol)) for mol in environment._valid_actions] 
         ind = np.argmax(qed_l)
         print(qed_l[ind])

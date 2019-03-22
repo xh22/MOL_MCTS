@@ -25,7 +25,7 @@ def start_self_play(player, mol, temp=1e-3):
       allow_no_modification = False,
       allow_bonds_between_rings = False,
       allowed_ring_sizes = [5, 6],
-      max_steps = 6,
+      max_steps = 10,
       target_fn = None,
       record_path = True)
     environment.initialize()
@@ -46,17 +46,17 @@ class TrainPipeline():
         self.learn_rate = 2e-3
         self.lr_multiplier = 1.0  # adaptively adjust the learning rate based on KL
         self.temp = 1.0  # the temperature param
-        self.n_playout = 20  # num of simulations for each move
+        self.n_playout = 30  # num of simulations for each move
         self.c_puct = 1 
-        self.buffer_size = 10000
-        self.batch_size = 100  # mini-batch size for training
+        self.buffer_size = 300
+        self.batch_size = 200  # mini-batch size for training
         self.data_buffer = deque(maxlen=self.buffer_size)
-        self.epochs = 25  # num of train_steps for each update
+        self.epochs = 100  # num of train_steps for each update
         self.kl_targ = 0.2
         self.check_freq = 4
         self.mol=mol
         self.play_batch_size=1
-        self.game_batch_num = 20
+        self.game_batch_num = 15
         self.in_dim=1024
         self.n_hidden_1 = 1024
         self.n_hidden_2 = 1024
@@ -97,16 +97,16 @@ class TrainPipeline():
 
     def policy_update(self):
         """update the policy-value net"""
-        mini_batch = random.sample(self.data_buffer, self.batch_size)
-        state_batch = [data[0] for data in mini_batch]
-        mcts_probs_batch = [data[1] for data in mini_batch]
-        old_probs = self.policy_value_net.policy_value(state_batch)
+        # mini_batch = random.sample(self.data_buffer, self.batch_size)
+        # state_batch = [data[0] for data in mini_batch]
+        # mcts_probs_batch = [data[1] for data in mini_batch]
+        # old_probs = self.policy_value_net.policy_value(state_batch)
 
         for i in range(self.epochs):
-            # mini_batch = random.sample(self.data_buffer, self.batch_size)
-            # state_batch = [data[0] for data in mini_batch]
-            # mcts_probs_batch = [data[1] for data in mini_batch]
-            # old_probs = self.policy_value_net.policy_value(state_batch)
+            mini_batch = random.sample(self.data_buffer, self.batch_size)
+            state_batch = [data[0] for data in mini_batch]
+            mcts_probs_batch = [data[1] for data in mini_batch]
+            old_probs = self.policy_value_net.policy_value(state_batch)
             loss, entropy = self.policy_value_net.train_step(
                     state_batch,
                     mcts_probs_batch,
@@ -151,7 +151,7 @@ class TrainPipeline():
             allow_no_modification=False,
             allow_bonds_between_rings=False,
             allowed_ring_sizes=[5, 6],
-            max_steps=6,
+            max_steps=10,
             target_fn=None,
             record_path=False)
         environment.initialize()
@@ -160,7 +160,7 @@ class TrainPipeline():
         moves, fps, _Qs = player.get_action(environment,
                                             temp=self.temp,
                                             return_prob=1,
-                                            rand=True)
+                                            rand=False)
 
 
         return moves
