@@ -13,7 +13,7 @@ import sys
 
 def get_fingerprint(act):
     act=Chem.MolFromSmiles(act)
-    return list(Chem.GetMorganFingerprintAsBitVect(act, 2, nBits=256))
+    return list(Chem.GetMorganFingerprintAsBitVect(act, 2, nBits=1024))
 
 def start_self_play(player, mol, temp=1e-3):
     """Runs a single step within an episode."""
@@ -30,20 +30,12 @@ def start_self_play(player, mol, temp=1e-3):
       record_path = True)
     environment.initialize()
     environment.init_qed=QED.qed(Chem.MolFromSmiles(mol))
-    states, Q = [], []
 
-    while True:
-        move, moves, _Qs = player.get_action(environment,
-                                             temp=temp,
-                                             return_prob=1)
-        states.extend(moves)
-        Q.extend(_Qs)
-        environment.step(move)
-        if environment._counter >= environment.max_steps:
-            player.reset_player()
-            print("sample finished")
-            print("data length is: {}".format(len(states)))
-            return zip(states, Q)
+    moves, fps, _Qs = player.get_action(environment,
+                                         temp=temp,
+                                         return_prob=1)
+
+    return zip(fps, _Qs)
 
 
 
@@ -54,14 +46,14 @@ class TrainPipeline():
         self.learn_rate = 2e-3
         self.lr_multiplier = 1.0  # adaptively adjust the learning rate based on KL
         self.temp = 1.0  # the temperature param
-        self.n_playout = 100  # num of simulations for each move
+        self.n_playout = 20  # num of simulations for each move
         self.c_puct = 1 
         self.buffer_size = 10000
-        self.batch_size = 400  # mini-batch size for training
+        self.batch_size = 100  # mini-batch size for training
         self.data_buffer = deque(maxlen=self.buffer_size)
-        self.epochs = 8  # num of train_steps for each update
+        self.epochs = 25  # num of train_steps for each update
         self.kl_targ = 0.2
-        self.check_freq = 3 
+        self.check_freq = 4
         self.mol=mol
         self.play_batch_size=1
         self.game_batch_num = 20
@@ -105,16 +97,16 @@ class TrainPipeline():
 
     def policy_update(self):
         """update the policy-value net"""
-        # mini_batch = random.sample(self.data_buffer, self.batch_size)
-        # state_batch = [data[0] for data in mini_batch]
-        # mcts_probs_batch = [data[1] for data in mini_batch]
-        # old_probs = self.policy_value_net.policy_value(state_batch)
+        mini_batch = random.sample(self.data_buffer, self.batch_size)
+        state_batch = [data[0] for data in mini_batch]
+        mcts_probs_batch = [data[1] for data in mini_batch]
+        old_probs = self.policy_value_net.policy_value(state_batch)
 
         for i in range(self.epochs):
-            mini_batch = random.sample(self.data_buffer, self.batch_size)
-            state_batch = [data[0] for data in mini_batch]
-            mcts_probs_batch = [data[1] for data in mini_batch]
-            old_probs = self.policy_value_net.policy_value(state_batch)
+            # mini_batch = random.sample(self.data_buffer, self.batch_size)
+            # state_batch = [data[0] for data in mini_batch]
+            # mcts_probs_batch = [data[1] for data in mini_batch]
+            # old_probs = self.policy_value_net.policy_value(state_batch)
             loss, entropy = self.policy_value_net.train_step(
                     state_batch,
                     mcts_probs_batch,
@@ -151,7 +143,7 @@ class TrainPipeline():
         """
         player = MCTSPlayer(self.policy_value_net.policy_value,
                                          c_puct=self.c_puct,
-                                         n_playout=10)
+                                         n_playout=20)
         environment = Molecule(
             ["C", "O", "N"],
             init_mol=self.mol,
@@ -165,15 +157,14 @@ class TrainPipeline():
         environment.initialize()
         environment.init_qed = QED.qed(Chem.MolFromSmiles(self.mol))
 
-        move_list=[]
-        while True:
-            #move, moves, _Qs = self.mcts_player.eval_action(environment)
-            move, moves, _Qs = player.get_action(environment)
+        moves, fps, _Qs = player.get_action(environment,
+                                            temp=self.temp,
+                                            return_prob=1,
+                                            rand=True)
 
-            move_list.append(move)
-            environment.step(move)
-            if environment._counter >= environment.max_steps:
-                return move_list
+
+        return moves
+
 
     def run(self):
         """run the training pipeline"""
