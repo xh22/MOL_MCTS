@@ -26,7 +26,7 @@ def start_self_play(player, mol, temp=1e-3):
       allow_no_modification = False,
       allow_bonds_between_rings = False,
       allowed_ring_sizes = [5, 6],
-      max_steps = 6,
+      max_steps = 10,
       target_fn = None,
       record_path = True)
     environment.initialize()
@@ -88,7 +88,7 @@ class TrainPipeline():
         self.data_buffer = deque(maxlen=self.buffer_size)
         self.epochs = 50  # num of train_steps for each update
         self.kl_targ = 0.2
-        self.check_freq = 2
+        self.check_freq = 3
         self.mol=mol
         self.play_batch_size=1
         self.game_batch_num = 15
@@ -186,7 +186,7 @@ class TrainPipeline():
             allow_no_modification=False,
             allow_bonds_between_rings=False,
             allowed_ring_sizes=[5, 6],
-            max_steps=6,
+            max_steps=10,
             target_fn=None,
             record_path=False)
         environment.initialize()
@@ -195,7 +195,7 @@ class TrainPipeline():
         moves, fp, _S_P, _Qs = player.get_action(environment,
                                             temp=self.temp,
                                             return_prob=1,
-                                            rand=True)
+                                            rand=False)
 
 
         return moves,_S_P, _Qs
@@ -242,8 +242,8 @@ if __name__ == '__main__':
 
 
 
-    # training_pipeline = TrainPipeline(mol="O=C(CCC1CCN(c2ncnc3[nH]ccc23)CC1)NCc1ccc(F)cc1")
-    training_pipeline = TrainPipeline(mol="OCc1cccc(C[C@@H]2CCN(c3ncnc4[nH]ccc34)C2)c1")
+    training_pipeline = TrainPipeline(mol="O=C(CCC1CCN(c2ncnc3[nH]ccc23)CC1)NCc1ccc(F)cc1")
+    #training_pipeline = TrainPipeline(mol="OCc1cccc(C[C@@H]2CCN(c3ncnc4[nH]ccc34)C2)c1")
     # training_pipeline = TrainPipeline(mol="C#CNN=O")
     print('result{}.csv'.format(sys.argv[1]))
 
