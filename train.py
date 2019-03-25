@@ -5,6 +5,7 @@ from molecules import  Molecule
 import random
 from collections import defaultdict, deque
 from mcts import MCTSPlayer
+from mcts_pure import  MCTSPUREPlayer
 from model import PolicyValueNet
 from rdkit.Chem import QED
 from rdkit.Chem import AllChem as Chem
@@ -13,7 +14,7 @@ import sys
 
 def get_fingerprint(act):
     act=Chem.MolFromSmiles(act)
-    return list(Chem.GetMorganFingerprintAsBitVect(act, 2, nBits=1024))
+    return list(Chem.GetMorganFingerprintAsBitVect(act, 3, nBits=1024))
 
 def start_self_play(player, mol, temp=1e-3):
     """Runs a single step within an episode."""
@@ -25,17 +26,51 @@ def start_self_play(player, mol, temp=1e-3):
       allow_no_modification = False,
       allow_bonds_between_rings = False,
       allowed_ring_sizes = [5, 6],
-      max_steps = 10,
+      max_steps = 6,
       target_fn = None,
       record_path = True)
     environment.initialize()
     environment.init_qed=QED.qed(Chem.MolFromSmiles(mol))
 
-    moves, fps, _Qs = player.get_action(environment,
+    moves, fps, pp, _Qs = player.get_action(environment,
                                          temp=temp,
                                          return_prob=1)
-
+    # print(_Qs)
+    # print(pp)
+    # print("@"*30)
     return zip(fps, _Qs)
+
+def mcts_evaluate(mol):
+    """
+    Evaluate the trained policy by playing against the pure MCTS player
+    Note: this is only for monitoring the progress of training
+    """
+    pure_mcts = MCTSPUREPlayer(None,
+                                c_puct=1,
+                                n_playout=30,
+                                is_selfplay=1)
+    environment = Molecule(
+        ["C", "O", "N"],
+        init_mol=mol,
+        allow_removal=True,
+        allow_no_modification=False,
+        allow_bonds_between_rings=False,
+        allowed_ring_sizes=[5, 6],
+        max_steps=6,
+        target_fn=None,
+        record_path=False)
+    environment.initialize()
+    environment.init_qed = QED.qed(Chem.MolFromSmiles(mol))
+
+    moves_Qs = pure_mcts.get_action(environment,
+                                        temp=1,
+                                        return_prob=1,
+                                        rand=True)
+
+
+    return moves_Qs
+
+
 
 
 
@@ -48,12 +83,12 @@ class TrainPipeline():
         self.temp = 1.0  # the temperature param
         self.n_playout = 30  # num of simulations for each move
         self.c_puct = 1 
-        self.buffer_size = 300
+        self.buffer_size = 200
         self.batch_size = 200  # mini-batch size for training
         self.data_buffer = deque(maxlen=self.buffer_size)
-        self.epochs = 100  # num of train_steps for each update
+        self.epochs = 50  # num of train_steps for each update
         self.kl_targ = 0.2
-        self.check_freq = 4
+        self.check_freq = 2
         self.mol=mol
         self.play_batch_size=1
         self.game_batch_num = 15
@@ -143,7 +178,7 @@ class TrainPipeline():
         """
         player = MCTSPlayer(self.policy_value_net.policy_value,
                                          c_puct=self.c_puct,
-                                         n_playout=20)
+                                         n_playout=30)
         environment = Molecule(
             ["C", "O", "N"],
             init_mol=self.mol,
@@ -151,19 +186,23 @@ class TrainPipeline():
             allow_no_modification=False,
             allow_bonds_between_rings=False,
             allowed_ring_sizes=[5, 6],
-            max_steps=10,
+            max_steps=6,
             target_fn=None,
             record_path=False)
         environment.initialize()
         environment.init_qed = QED.qed(Chem.MolFromSmiles(self.mol))
 
-        moves, fps, _Qs = player.get_action(environment,
+        moves, fp, _S_P, _Qs = player.get_action(environment,
                                             temp=self.temp,
                                             return_prob=1,
-                                            rand=False)
+                                            rand=True)
 
 
-        return moves
+        return moves,_S_P, _Qs
+
+
+
+
 
 
     def run(self):
@@ -173,24 +212,36 @@ class TrainPipeline():
                 self.collect_selfplay_data(self.play_batch_size)
                 print("batch i: {}, episode_len: {}".format(
                         i+1, self.episode_len))
-                if len(self.data_buffer) > self.batch_size:
+                if len(self.data_buffer) >= self.batch_size:
                     loss, entropy = self.policy_update()
                     print("loss is {}  entropy is {}".format(loss, entropy))
                 # check the performance of the current model,
                 # and save the model params
                 if (i+1) % self.check_freq == 0:
                     print("current self-play batch: {}".format(i+1))
-                    move_list = self.policy_evaluate()
+                    move_list,_S_P, _Qs = self.policy_evaluate()
                     # self.policy_value_net.save_model('./current_policy.model')
                     print(move_list)
+                    print(_Qs)
+                    print(_S_P)
+
                     self.output_smi.extend(move_list)
                     o_qed=list(map(lambda x:QED.qed(Chem.MolFromSmiles(x)), move_list))
                     print(o_qed)
+                    print("#"*30)
                     self.output_qed.extend(o_qed)
         except KeyboardInterrupt:
             print('\n\rquit')
 
 if __name__ == '__main__':
+    # moves_Qs=mcts_evaluate("OCc1cccc(C[C@@H]2CCN(c3ncnc4[nH]ccc34)C2)c1")
+    # print(moves_Qs)
+    # o_qed = list(map(lambda x: QED.qed(Chem.MolFromSmiles(x[0])), moves_Qs))
+    # print(o_qed)
+    # exit()
+
+
+
     # training_pipeline = TrainPipeline(mol="O=C(CCC1CCN(c2ncnc3[nH]ccc23)CC1)NCc1ccc(F)cc1")
     training_pipeline = TrainPipeline(mol="OCc1cccc(C[C@@H]2CCN(c3ncnc4[nH]ccc34)C2)c1")
     # training_pipeline = TrainPipeline(mol="C#CNN=O")

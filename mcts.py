@@ -19,7 +19,7 @@ def softmax(x):
 
 def get_fingerprint(act):
     act=Chem.MolFromSmiles(act)
-    return list(Chem.GetMorganFingerprintAsBitVect(act, 2, nBits=1024))
+    return list(Chem.GetMorganFingerprintAsBitVect(act, 3, nBits=1024))
 
 root_fp=get_fingerprint("OCc1cccc(C[C@@H]2CCN(c3ncnc4[nH]ccc34)C2)c1")
 
@@ -29,7 +29,7 @@ class TreeNode(object):
     its visit-count-adjusted prior score u.
     """
 
-    def __init__(self, parent, prior_p, fp):
+    def __init__(self, parent, prior_p, s_p, fp):
         self._parent = parent
         self._fp = fp
         self._children = {}  # a map from action to TreeNode
@@ -37,15 +37,16 @@ class TreeNode(object):
         self._Q = 0
         self._u = 0
         self._P = prior_p
+        self._S_P =s_p
 
     def expand(self, action_priors):
         """Expand tree by creating new children.
         action_priors: a list of tuples of actions and their prior probability
             according to the policy function.
         """
-        for action, prob, fp in action_priors:
+        for action, prob,s_p, fp in action_priors:
             if action not in self._children:
-                self._children[action] = TreeNode(self, prob, fp)
+                self._children[action] = TreeNode(self, prob,s_p, fp)
 
     def select(self, c_puct, rand):
         """Select action among children that gives maximum action value Q
@@ -96,7 +97,7 @@ class TreeNode(object):
         c_puct: a number in (0, inf) controlling the relative impact of
             value Q, and prior probability P, on this node's score.
         """
-        return self._P + self._Q / (self._n_visits+1)
+        return c_puct*self._P + self._Q / (self._n_visits+1)
 
     def is_leaf(self):
         """Check if leaf node (i.e. no nodes below this have been expanded)."""
@@ -119,7 +120,7 @@ class MCTS(object):
             converges to the maximum-value policy. A higher value means
             relying on the prior more.
         """
-        self._root = TreeNode(None, 1.0, root_fp)
+        self._root = TreeNode(None, 1.0, 1.0, root_fp)
         self._policy = policy_value_fn
         self._c_puct = c_puct
         self._n_playout = n_playout
@@ -135,8 +136,8 @@ class MCTS(object):
             if node.is_leaf():
                 action_probs = [(state._valid_actions[i],
                                  (QED.qed(Chem.MolFromSmiles(
-                                     state._valid_actions[i])) * 0.9 **
-                                  (state.max_steps - state._counter + 1)),
+                                     state._valid_actions[i])) * (0.8 **
+                                  (state.max_steps - state._counter + 1))),self._policy([state._valid_actions_fp[i]])[0],
                                  state._valid_actions_fp[i])
                                 for i in range(len(state._valid_actions_fp))]
                 # Check for end of game.
@@ -147,7 +148,9 @@ class MCTS(object):
             action, node = node.select(self._c_puct, rand)
             state.step(action)
             # self.update_with_move(action, node._fp)
-            node.update_recursive(self._policy([node._fp])[0])
+            if state._counter == state.max_steps:
+                node._n_visits += 1
+            node.update_recursive(node._S_P)
 
         # Update value and visit count of nodes in this traversal.
 
@@ -164,17 +167,18 @@ class MCTS(object):
             self._playout(state_copy, rand)
 
         act_visits=[]
-        quen=[self._root]
+        quen=[(state.init_mol,self._root)]
         # calc the move probabilities based on visit counts at the root node
         while quen:
-            node = quen.pop(0)
+            act,node = quen.pop(0)
+            act_visits.append((act, node._fp, node._S_P, node.get_value(self._c_puct)))
+
             for act, item in node._children.items():
                 if item._n_visits>0:
-                    act_visits.append((act, item._fp, item.get_value(self._c_puct)))
-                    quen.append(item)
-
-        acts, fps, _Qs = zip(*act_visits)
-        return acts, fps, _Qs
+                    quen.append((act, item))
+        act_visits=act_visits[1:]
+        acts, fp, _S_P, _Qs = zip(*act_visits)
+        return acts, fp, _S_P, _Qs
 
     def update_with_move(self, last_move, fp):
         """Step forward in the tree, keeping everything we already know
@@ -184,7 +188,7 @@ class MCTS(object):
             self._root = self._root._children[last_move]
             self._root._parent = None
         else:
-            self._root = TreeNode(None, 1.0, fp)
+            self._root = TreeNode(None, 1.0,1.0, fp)
 
     def __str__(self):
         return "MCTS"
@@ -232,12 +236,12 @@ class MCTSPlayer(object):
         self.reset_player()
         # the pi vector returned by MCTS as in the alphaGo Zero paper
         # if environment._counter < environment.max_steps:
-        acts, fps, _Qs = self.mcts.get_move_probs(environment, rand)
+        acts, fp, _S_P, _Qs = self.mcts.get_move_probs(environment, rand)
 
         if return_prob:
-            return acts, fps, _Qs
+            return acts, fp, _S_P, _Qs
         else:
-            return acts, fps
+            return acts, fp, _S_P
         # else:
         #     print("WARNING: the mol is full")
 

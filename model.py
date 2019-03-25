@@ -29,7 +29,7 @@ class Net(nn.Module):
         self.layer2 = nn.Sequential(nn.Linear(n_hidden_1, n_hidden_2),
                                     nn.Sigmoid())
         self.layer3 = nn.Sequential(nn.Linear(n_hidden_2, out_dim),
-                                    nn.ReLU())
+                                    nn.Sigmoid())
 
     def forward(self, x):
         x = self.layer1(x)
@@ -70,11 +70,13 @@ class PolicyValueNet():
             state_batch = Variable(torch.FloatTensor(state_batch).cuda())
             log_act_probs = self.policy_value_net(state_batch)
             act_probs = log_act_probs.data.cpu().numpy().flatten()
+
             return act_probs
         else:
             state_batch = Variable(torch.FloatTensor(state_batch))
             log_act_probs = self.policy_value_net(state_batch)
             act_probs = log_act_probs.data.numpy().flatten()
+
             return act_probs
 
     def train_step(self, state_batch, mcts_probs, lr):
