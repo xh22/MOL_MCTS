@@ -240,9 +240,9 @@ if __name__ == '__main__':
     # print(o_qed)
     # exit()
 
+    mol="O=C(CCC1CCN(c2ncnc3[nH]ccc23)CC1)NCc1ccc(F)cc1"
 
-
-    training_pipeline = TrainPipeline(mol="O=C(CCC1CCN(c2ncnc3[nH]ccc23)CC1)NCc1ccc(F)cc1")
+    training_pipeline = TrainPipeline(mol=mol)
     #training_pipeline = TrainPipeline(mol="OCc1cccc(C[C@@H]2CCN(c3ncnc4[nH]ccc34)C2)c1")
     # training_pipeline = TrainPipeline(mol="C#CNN=O")
     print('result{}.csv'.format(sys.argv[1]))
@@ -250,6 +250,8 @@ if __name__ == '__main__':
     training_pipeline.run()
     re={}
     re["Ligand SMILES"] = training_pipeline.output_smi
+    re["Ligand SMILES"].insert(0,mol)
     re["QED"] = training_pipeline.output_qed
+    re["QED"].insert(0,QED.qed(Chem.MolFromSmiles(mol)))
     dataframe=pd.DataFrame.from_dict(re).drop_duplicates(subset=["Ligand SMILES"])
     dataframe.to_csv('result{}.csv'.format(sys.argv[1]),index=False)
