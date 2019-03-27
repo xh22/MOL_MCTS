@@ -199,8 +199,9 @@ def _bond_addition(state, atoms_with_free_valence, allowed_ring_sizes,
       Chem.Kekulize(new_state, clearAromaticFlags=True)
       a1=state.GetAtomWithIdx(atom1)
       a2=state.GetAtomWithIdx(atom2)
-      a1_n=all([x.IsInRing() for x in a1.GetNeighbors()])
-      a2_n=all([x.IsInRing() for x in a2.GetNeighbors()])
+      a1_n=any([x.IsInRing() for x in a1.GetNeighbors()])
+      a2_n=any([x.IsInRing() for x in a2.GetNeighbors()])
+
       if bond is not None:
         if bond.GetBondType() not in bond_orders:
           continue  # Skip aromatic bonds.
