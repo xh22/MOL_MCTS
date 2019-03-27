@@ -71,9 +71,6 @@ def mcts_evaluate(mol):
     return moves_Qs
 
 
-
-
-
 class TrainPipeline():
     def __init__(self, mol=None,init_model=None):
         # params of the board and the game
@@ -88,7 +85,7 @@ class TrainPipeline():
         self.data_buffer = deque(maxlen=self.buffer_size)
         self.epochs = 50  # num of train_steps for each update
         self.kl_targ = 0.2
-        self.check_freq = 3
+        self.check_freq = 5 
         self.mol=mol
         self.play_batch_size=1
         self.game_batch_num = 15
@@ -239,19 +236,21 @@ if __name__ == '__main__':
     # o_qed = list(map(lambda x: QED.qed(Chem.MolFromSmiles(x[0])), moves_Qs))
     # print(o_qed)
     # exit()
+    fil1 = pd.read_csv("./" + sys.argv[1], sep=' ', header=0)
+    mol_list=fil1["smiles"]
 
-    mol="O=C(CCC1CCN(c2ncnc3[nH]ccc23)CC1)NCc1ccc(F)cc1"
-
-    training_pipeline = TrainPipeline(mol=mol)
-    #training_pipeline = TrainPipeline(mol="OCc1cccc(C[C@@H]2CCN(c3ncnc4[nH]ccc34)C2)c1")
-    # training_pipeline = TrainPipeline(mol="C#CNN=O")
-    print('result{}.csv'.format(sys.argv[1]))
-
-    training_pipeline.run()
-    re={}
-    re["Ligand SMILES"] = training_pipeline.output_smi
-    re["Ligand SMILES"].insert(0,mol)
-    re["QED"] = training_pipeline.output_qed
-    re["QED"].insert(0,QED.qed(Chem.MolFromSmiles(mol)))
-    dataframe=pd.DataFrame.from_dict(re).drop_duplicates(subset=["Ligand SMILES"])
-    dataframe.to_csv('result{}.csv'.format(sys.argv[1]),index=False)
+    for inde, mol in enumerate(mol_list):
+        #mol="O=C(CCC1CCN(c2ncnc3[nH]ccc23)CC1)NCc1ccc(F)cc1"
+ 
+        training_pipeline = TrainPipeline(mol=mol)
+        #training_pipeline = TrainPipeline(mol="OCc1cccc(C[C@@H]2CCN(c3ncnc4[nH]ccc34)C2)c1")
+        # training_pipeline = TrainPipeline(mol="C#CNN=O")
+ 
+        training_pipeline.run()
+        re={}
+        re["Ligand SMILES"] = training_pipeline.output_smi
+        re["Ligand SMILES"].insert(0,mol)
+        re["QED"] = training_pipeline.output_qed
+        re["QED"].insert(0,QED.qed(Chem.MolFromSmiles(mol)))
+        dataframe=pd.DataFrame.from_dict(re).drop_duplicates(subset=["Ligand SMILES"])
+        dataframe.to_csv('./data/result{}.csv'.format(inde),index=False)
