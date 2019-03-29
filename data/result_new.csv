@@ -1,3 +1,4 @@
+Ligand SMILES,SScore
 N#Cc1ccc(Cn2cncc2CNC2CCN(C(=O)c3c[nH]c4ncccc34)C2)n1C,0.8453876
 CC(C)N1CCC(CNCc2cnc(Nc3ccc(F)nc3)n2C)CC1,0.86050683
 CC(=O)NC(C)Cc1ccc(C#Cc2cnc(N3CC4CCC(C3)O4)nn2)cc1,0.9723891
