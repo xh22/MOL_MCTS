@@ -236,7 +236,9 @@ if __name__ == '__main__':
     # o_qed = list(map(lambda x: QED.qed(Chem.MolFromSmiles(x[0])), moves_Qs))
     # print(o_qed)
     # exit()
-    fil1 = pd.read_csv("./" + sys.argv[1], sep=' ', header=0)
+
+    #fil1 = pd.read_csv("./" + sys.argv[1], sep=' ', header=0)
+    fil1 = pd.read_csv("./" + sys.argv[1], sep=',', header=0)
     mol_list=fil1["smiles"]
 
     for inde, mol in enumerate(mol_list):
@@ -253,4 +255,4 @@ if __name__ == '__main__':
         re["QED"] = training_pipeline.output_qed
         re["QED"].insert(0,QED.qed(Chem.MolFromSmiles(mol)))
         dataframe=pd.DataFrame.from_dict(re).drop_duplicates(subset=["Ligand SMILES"])
-        dataframe.to_csv('./data/result{}.csv'.format(inde),index=False)
+        dataframe.to_csv('./data/{}_{}.csv'.format(sys.argv[1].split(".")[0],inde),index=False)
