@@ -11,6 +11,7 @@ import json
 from rdkit.Chem import QED
 from rdkit.Chem import AllChem as Chem
 import random
+from rdkit_molecules import  penalized_logp
 
 def softmax(x):
     probs = np.exp(x - np.max(x))
@@ -125,6 +126,11 @@ class MCTS(object):
         self._c_puct = c_puct
         self._n_playout = n_playout
 
+    def get_score(self, mol):
+        #return QED.qed(Chem.MolFromSmiles(mol))
+        return penalized_logp(Chem.MolFromSmiles(mol))
+         
+
     def _playout(self, state, rand):
         """Run a single playout from the root to the leaf, getting a value at
         the leaf and propagating it back through its parents.
@@ -135,8 +141,7 @@ class MCTS(object):
         while state._counter < state.max_steps:
             if node.is_leaf():
                 action_probs = [(state._valid_actions[i],
-                                 (QED.qed(Chem.MolFromSmiles(
-                                     state._valid_actions[i])) * (0.8 **
+                                 (self.get_score(state._valid_actions[i]) * (0.8 **
                                   (state.max_steps - state._counter + 1))),self._policy([state._valid_actions_fp[i]])[0],
                                  state._valid_actions_fp[i])
                                 for i in range(len(state._valid_actions_fp))]

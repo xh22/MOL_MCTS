@@ -29,7 +29,8 @@ class Net(nn.Module):
         self.layer2 = nn.Sequential(nn.Linear(n_hidden_1, n_hidden_2),
                                     nn.Sigmoid())
         self.layer3 = nn.Sequential(nn.Linear(n_hidden_2, out_dim),
-                                    nn.Sigmoid())
+                                    #nn.Sigmoid())
+                                    nn.ReLU())
 
     def forward(self, x):
         x = self.layer1(x)
