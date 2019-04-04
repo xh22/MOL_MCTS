@@ -26,7 +26,7 @@ def start_self_play(player, mol, temp=1e-3):
       allow_no_modification = False,
       allow_bonds_between_rings = False,
       allowed_ring_sizes = [5, 6],
-      max_steps = 10,
+      max_steps = 15,
       target_fn = None,
       record_path = True)
     environment.initialize()

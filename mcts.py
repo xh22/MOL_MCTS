@@ -11,7 +11,7 @@ import json
 from rdkit.Chem import QED
 from rdkit.Chem import AllChem as Chem
 import random
-from rdkit_molecules import  penalized_logp
+#from rdkit_molecules import  penalized_logp
 
 def softmax(x):
     probs = np.exp(x - np.max(x))
@@ -127,8 +127,8 @@ class MCTS(object):
         self._n_playout = n_playout
 
     def get_score(self, mol):
-        #return QED.qed(Chem.MolFromSmiles(mol))
-        return penalized_logp(Chem.MolFromSmiles(mol))
+        return QED.qed(Chem.MolFromSmiles(mol))
+        #return penalized_logp(Chem.MolFromSmiles(mol))
          
 
     def _playout(self, state, rand):
