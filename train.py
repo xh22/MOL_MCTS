@@ -243,7 +243,7 @@ if __name__ == '__main__':
 
     for inde, mol in enumerate(mol_list):
         #mol="O=C(CCC1CCN(c2ncnc3[nH]ccc23)CC1)NCc1ccc(F)cc1"
-        if (inde+1) % int(sys.argv[2]) != 0:
+        if (inde+1) % 6 != int(sys.argv[2]):
             continue
  
         training_pipeline = TrainPipeline(mol=mol)

@@ -83,7 +83,7 @@ def get_valid_actions(state, atom_types, allow_removal, allow_no_modification,
           for atom in mol.GetAtoms()
           # Only atoms that allow us to replace at least one H with a new bond
           # are enumerated here.
-          if atom.GetNumImplicitHs() >= i
+          if (atom.GetSymbol().lower() == "c" and  atom.GetNumImplicitHs() >= i+1) or (atom.GetSymbol().lower() != "c" and  atom.GetNumImplicitHs() >= i)
       ] for i in range(1, max(atom_valences.values()))
   }
   valid_actions = set()
