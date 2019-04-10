@@ -149,7 +149,15 @@ class MCTS(object):
                 node.expand(action_probs)
 
                 # Greedily select next move.
-            action, node = node.select(self._c_puct, rand)
+            try:
+                action, node = node.select(self._c_puct, rand)
+            except:
+                print("FFFFFFFFFFFFFFFFFFFFFFFFF")
+                print(state._counter)
+                print(state._state)
+                print(state._valid_actions)
+                print("FFFFFFFFFFFFFFFFFFFFFFFFF")
+                return None
             state.step(action)
             # self.update_with_move(action, node._fp)
             if state._counter == state.max_steps:

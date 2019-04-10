@@ -27,7 +27,7 @@ def start_self_play(player, mol, temp=1e-3):
       ["C", "O", "N"],
       init_mol = mol,
       allow_removal = True,
-      allow_no_modification = True,
+      allow_no_modification = False,
       allow_bonds_between_rings = False,
       allowed_ring_sizes = [5, 6],
       max_steps = 6,
@@ -36,10 +36,11 @@ def start_self_play(player, mol, temp=1e-3):
     environment.initialize()
     environment.init_qed=QED.qed(Chem.MolFromSmiles(mol))
     states, Q = [], []
-    for i in range(10000):
+    for i in range(100):
         print("###")
         for i in range(6):
             qed_l=[QED.qed(Chem.MolFromSmiles(mol)) for mol in environment._valid_actions]
+            print(qed_l)
             for k in qed_l:
                 if k > 0.8091:
                     print(k)
@@ -59,4 +60,4 @@ def start_self_play(player, mol, temp=1e-3):
         environment.initialize()
 
     print("done!! nothing found")
-start_self_play(None,"OCc1cccc(C[C@@H]2CCN(c3ncnc4[nH]ccc34)C2)c1")
+start_self_play(None,"c1cc(-c2ccc3[nH]ccc3c2)cc(-c2cn[nH]c2)n1")
