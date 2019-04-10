@@ -22,7 +22,7 @@ def get_fingerprint(act):
     act=Chem.MolFromSmiles(act)
     return list(Chem.GetMorganFingerprintAsBitVect(act, 3, nBits=1024))
 
-root_fp=get_fingerprint("OCc1cccc(C[C@@H]2CCN(c3ncnc4[nH]ccc34)C2)c1")
+root_fp=[]
 
 class TreeNode(object):
     """A node in the MCTS tree.
@@ -36,7 +36,6 @@ class TreeNode(object):
         self._children = {}  # a map from action to TreeNode
         self._n_visits = 0
         self._Q = 0
-        self._u = 0
         self._P = prior_p
         self._S_P =s_p
 
