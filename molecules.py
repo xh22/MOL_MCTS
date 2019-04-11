@@ -103,7 +103,7 @@ def get_valid_actions(state, atom_types, allow_removal, allow_no_modification,
     valid_actions.update(_bond_removal(mol))
   if allow_no_modification:
     valid_actions.add(Chem.MolToSmiles(mol))
-  valid_actions.update(_change_atom(mol))
+  #valid_actions.update(_change_atom(mol))
   return valid_actions
 
 
