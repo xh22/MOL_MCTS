@@ -103,7 +103,6 @@ def get_valid_actions(state, atom_types, allow_removal, allow_no_modification,
     valid_actions.update(_bond_removal(mol))
   if allow_no_modification:
     valid_actions.add(Chem.MolToSmiles(mol))
-  #valid_actions.update(_change_atom(mol))
   return valid_actions
 
 
@@ -304,35 +303,6 @@ def _bond_removal(state):
         if len(parts) == 1 or len(parts[0]) == 1:
           bond_removal.add(parts[-1])
   return bond_removal
-
-def _change_atom(state):
-  """
-  change atom : c-->n
-  Args:
-    state: RDKit Mol.
-
-  Returns:
-    Set of string SMILES; the available actions.
-  """
-  change_atom=[]
-  smile = Chem.MolToSmiles(state)
-  for i in range(len(smile)):
-    if smile[i] == "c":
-      new_smile=list(smile)
-      new_smile[i]="n"
-      new_smile = "".join(new_smile)
-      try:
-        new_state=Chem.MolFromSmiles(new_smile)
-      except:
-        continue
-      if not new_state:
-        continue
-      sanitization_result = Chem.SanitizeMol(new_state, catchErrors=True)
-      # When sanitization fails
-      if sanitization_result:
-        continue  
-      change_atom.append(new_smile)
-  return change_atom 
 
 
 def get_fingerprint(act):
